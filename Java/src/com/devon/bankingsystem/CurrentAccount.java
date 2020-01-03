@@ -4,7 +4,6 @@
  *************************************** */
 package com.devon.bankingsystem;
 
-import java.util.concurrent.Semaphore;
 
 public class CurrentAccount implements BankAccount {
     // Instance variables of CurrentAccount
@@ -14,39 +13,23 @@ public class CurrentAccount implements BankAccount {
     // "balance" variable is ths shared resource - access tho this should be mutually exclusive
     private int balance;
 
-    // Mutex Semaphore
-    private Semaphore mutexSemaphore;
-
     // CurrentAccount constructor
     public CurrentAccount(String customerID, int accountNumber, int balance) {
         this.customerID = customerID;
         this.accountNumber = accountNumber;
         this.statement = new Statement(customerID, accountNumber);
         this.balance = balance;
-        this.mutexSemaphore = new Semaphore(1);
     }
 
-    // Method for depositing money to the current account
+    // Synchronized method for depositing money to the current account
     @Override
-    public void deposit(Transaction transaction) {
-        try {
-            // Acquiring permit of mutex
-            mutexSemaphore.acquire();
+    public synchronized void deposit(Transaction transaction) {
+        int amountToDeposit = transaction.getAmount();
+        this.balance += amountToDeposit;
+        this.statement.addTransaction(transaction.getCID(), amountToDeposit, this.balance, TransactionType.DEPOSIT);
 
-            int amountToDeposit = transaction.getAmount();
-            this.balance += amountToDeposit;
-            this.statement.addTransaction(transaction.getCID(), amountToDeposit, this.balance, TransactionType.DEPOSIT);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            if(mutexSemaphore != null) {
-                // Releasing permit of mutex
-                mutexSemaphore.release();
-            }
-            // Notifying all the other waiting threads that the deposit is complete
-            notifyAll();
-        }
+        // Notifying all the other waiting threads that the deposit is complete
+        notifyAll();
     }
 
     // Synchronized method for withdrawing money from the current account

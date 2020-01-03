@@ -5,6 +5,7 @@
 package com.devon.bankingsystem;
 
 import java.util.Scanner;
+import java.util.concurrent.Semaphore;
 
 public class BankingSystem {
     // Student current account
@@ -12,11 +13,14 @@ public class BankingSystem {
     // Two thread groups : one for humans and one for the Loan Company & University
     ThreadGroup humans;
     ThreadGroup organizations;
-    // 1 Student,1 Grandmother,1 Loan Company & 1University
+    // 1 Student,1 Grandmother,1 Loan Company & 1 University
     Student student;
     GrandMother grandMother;
     LoanCompany loanCompany;
     University university;
+
+    // Mutex Semaphore
+    private Semaphore mutexSemaphore = new Semaphore(1);;
 
     // BankingSystem constructor
     public BankingSystem() {

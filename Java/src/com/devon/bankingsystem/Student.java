@@ -38,16 +38,11 @@ public class Student extends Thread {
         allTransactions.forEach(transaction -> {
             // checking the transaction type and performing either withdrawal or deposit
             if (transaction.getTransactionType() == TransactionType.WITHDRAW) {
-
-                synchronized (this.currentAccount) {
-                    currentAccount.withdrawal(transaction);
-                    System.out.println("STUDENT -> Transaction performed: " + transaction);
-                }
+                currentAccount.withdrawal(transaction);
+                System.out.println("STUDENT -> Transaction performed: " + transaction);
             } else {
-                synchronized (this.currentAccount) {
-                    currentAccount.deposit(transaction);
-                    System.out.println("STUDENT -> Transaction performed: " + transaction);
-                }
+                currentAccount.deposit(transaction);
+                System.out.println("STUDENT -> Transaction performed: " + transaction);
             }
 
             // Sleeping for a random amount of time between each transaction.

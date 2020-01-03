@@ -35,10 +35,8 @@ public class GrandMother extends Thread {
 
         depositTransactions.forEach(transaction -> {
             if (transaction.getTransactionType() == TransactionType.DEPOSIT) {
-                synchronized (this.currentAccount) {
-                    currentAccount.deposit(transaction);
-                    System.out.println("GRAND_MOTHER -> Transaction performed: " + transaction);
-                }
+                currentAccount.deposit(transaction);
+                System.out.println("GRAND_MOTHER -> Transaction performed: " + transaction);
             }
 
             // Sleeping for a random amount of time between each transaction.
