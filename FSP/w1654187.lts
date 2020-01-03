@@ -1,0 +1,79 @@
+/* ================================== CONSTANTS, RANGES AND SETS ================================== */
+
+/* CONSTANTS */
+const MIN_TRANSACTIONS = 1
+const MAX_TRANSACTIONS = 2
+
+/* RANGES */
+range TRANSACTION_RANGE = MIN_TRANSACTIONS..MAX_TRANSACTIONS
+range INITIAL_BALANCE = 1..1
+range FINAL_BALANCE = -1..3
+
+/* SETS */
+set AllUsers = { student, grandMother, loanCompany, university }
+set BankAccountExtention = { 
+    bankAcc.calculateNewBalance[FINAL_BALANCE], 
+    bankAcc.transactionIsInvalid 
+}
+
+/* ==========================================  PROCESSES ========================================== */
+
+/* BANK ACCOUNT PROCESS */
+BANK_ACCOUNT = INITIAL,
+INITIAL = ( readBalance[initBal: INITIAL_BALANCE] -> TRANSACTION ),
+TRANSACTION = ( performTransaction[TRANSACTION_RANGE] -> CALCULATE_NEW_BALANCE ),
+CALCULATE_NEW_BALANCE = ( calculateNewBalance[finalbal: FINAL_BALANCE] -> UPDATE_BALANCE[finalbal] | transactionIsInvalid -> BANK_ACCOUNT ),
+UPDATE_BALANCE[finalbal: FINAL_BALANCE] = ( updateBalance[finalbal] -> BANK_ACCOUNT ) .
+
+/* STUDENT PROCESS */
+STUDENT = INITIAL,
+INITIAL = ( bankAcc.readBalance[initBal: INITIAL_BALANCE] -> PERFORM_WITHDRAWAL[initBal] ),
+PERFORM_WITHDRAWAL[initBal: INITIAL_BALANCE] = ( bankAcc.withdraw[amount: TRANSACTION_RANGE] -> CALCULATE_NEW_BALANCE[initBal][amount] ),
+CALCULATE_NEW_BALANCE[initBal: INITIAL_BALANCE][amount: TRANSACTION_RANGE] = (
+    when (amount > initBal) bankAcc.insufficientBalance -> STUDENT |
+    when (amount <= initBal) bankAcc.calculateNewBalance[initBal - amount] -> BUY_PHONE[initBal - amount]
+),
+BUY_PHONE[finalbal: FINAL_BALANCE] = ( buySamsungPhone -> UPDATE_BALANCE[finalbal] ),
+UPDATE_BALANCE[finalbal: FINAL_BALANCE] = ( bankAcc.updateBalance[finalbal] -> STUDENT ) + BankAccountExtention .
+
+/* GRAND MOTHER PROCESS */
+GRAND_MOTHER = INITIAL,
+INITIAL = ( bankAcc.readBalance[initBal: INITIAL_BALANCE] -> PERFORM_DEPOSIT[initBal] ),
+PERFORM_DEPOSIT[initBal: INITIAL_BALANCE] = ( bankAcc.depositBirthdayPresentMoney[amount: TRANSACTION_RANGE] -> CALCULATE_NEW_BALANCE[initBal][amount] ),
+CALCULATE_NEW_BALANCE[initBal: INITIAL_BALANCE][amount: TRANSACTION_RANGE] = ( bankAcc.calculateNewBalance[initBal+amount] -> UPDATE_BALANCE[initBal + amount] ),
+UPDATE_BALANCE[finalbal: FINAL_BALANCE] = ( bankAcc.updateBalance[finalbal] -> SEND_CARD ),
+SEND_CARD = ( sendEBirthdayCard -> GRAND_MOTHER ) + BankAccountExtention .
+
+/* LOAN COMPANY PROCESS */
+LOAN_COMPANY = INITIAL, 
+INITIAL = ( bankAcc.readBalance[initBal: INITIAL_BALANCE] -> PERFORM_DEPOSIT[initBal] ),
+PERFORM_DEPOSIT[initBal: INITIAL_BALANCE] = ( bankAcc.depositLoan[amount: TRANSACTION_RANGE] -> CALCULATE_NEW_BALANCE[initBal][amount] ),
+CALCULATE_NEW_BALANCE[initBal: INITIAL_BALANCE][amount: TRANSACTION_RANGE] = ( bankAcc.calculateNewBalance[initBal + amount] -> UPDATE_BALANCE[initBal + amount] ),
+UPDATE_BALANCE[finalbal: FINAL_BALANCE] = ( bankAcc.updateBalance[finalbal] -> LOAN_COMPANY ) + BankAccountExtention .
+
+/* UNIVERSITY PROCESS */
+UNIVERSITY = INITIAL,
+INITIAL = ( bankAcc.readBalance[initBal: INITIAL_BALANCE] -> PERFORM_WITHDRAWAL[initBal] ),
+PERFORM_WITHDRAWAL[initBal: INITIAL_BALANCE] = ( bankAcc.deductUniFees[amount: TRANSACTION_RANGE] -> CALCULATE_NEW_BALANCE[initBal][amount] ),
+CALCULATE_NEW_BALANCE[initBal: INITIAL_BALANCE][amount:TRANSACTION_RANGE] = (
+    when (amount > initBal) bankAcc.insufficientBalance -> UNIVERSITY |
+    when (amount <= initBal) bankAcc.calculateNewBalance[initBal - amount] -> UPDATE_BALANCE[initBal - amount]
+),
+UPDATE_BALANCE[finalbal: FINAL_BALANCE] = ( bankAcc.updateBalance[finalbal] -> UNIVERSITY) + BankAccountExtention .
+
+/* CONCURRENT BANKING SYSTEM PROCESS */
+|| BANKING_SYSTEM = (
+	student : STUDENT || 
+    grandMother : GRAND_MOTHER || 
+    loanCompany : LOAN_COMPANY || 
+    university : UNIVERSITY ||
+    AllUsers :: bankAcc : BANK_ACCOUNT
+) / {
+    /* Re-labelling actions to achieve synchronization */ 
+    student.bankAcc.withdraw / student.bankAcc.performTransaction,
+    student.bankAcc.insufficientBalance / student.bankAcc.transactionIsInvalid,
+    grandMother.bankAcc.depositBirthdayPresentMoney / grandMother.bankAcc.performTransaction,
+    loanCompany.bankAcc.depositLoan / loanCompany.bankAcc.performTransaction,
+    university.bankAcc.deductUniFees / university.bankAcc.performTransaction,
+    university.bankAcc.insufficientBalance / university.bankAcc.transactionIsInvalid
+} .
