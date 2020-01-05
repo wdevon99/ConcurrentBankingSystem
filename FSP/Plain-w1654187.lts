@@ -1,0 +1,55 @@
+/* ================================== CONSTANTS, RANGES AND SETS ================================== */
+
+/* CONSTANTS */
+const MIN_TRANSACTIONS = 1
+const MAX_TRANSACTIONS = 2
+
+/* RANGES */
+range TRANSACTION_RANGE = MIN_TRANSACTIONS..MAX_TRANSACTIONS
+range INITIAL_BALANCE = 1..1
+range FINAL_BALANCE = -1..3
+
+/* ==========================================  PROCESSES ========================================== */
+
+/* BANK ACCOUNT PROCESS */
+BANK_ACCOUNT = INITIAL,
+INITIAL = ( readBalance[initBal: INITIAL_BALANCE] -> TRANSACTION ),
+TRANSACTION = ( performTransaction[TRANSACTION_RANGE] -> CALCULATE_NEW_BALANCE ),
+CALCULATE_NEW_BALANCE = ( calculateNewBalance[finalbal: FINAL_BALANCE] -> UPDATE_BALANCE[finalbal] | transactionIsInvalid -> BANK_ACCOUNT ),
+UPDATE_BALANCE[finalbal: FINAL_BALANCE] = ( updateBalance[finalbal] -> BANK_ACCOUNT ) .
+
+/* STUDENT PROCESS */
+STUDENT = INITIAL,
+INITIAL = ( readBalance[initBal: INITIAL_BALANCE] -> PERFORM_WITHDRAWAL[initBal] ),
+PERFORM_WITHDRAWAL[initBal: INITIAL_BALANCE] = ( withdraw[amount: TRANSACTION_RANGE] -> CALCULATE_NEW_BALANCE[initBal][amount] ),
+CALCULATE_NEW_BALANCE[initBal: INITIAL_BALANCE][amount: TRANSACTION_RANGE] = (
+    when (amount > initBal) insufficientBalance -> STUDENT |
+    when (amount <= initBal) calculateNewBalance[initBal - amount] -> BUY_PHONE[initBal - amount]
+),
+BUY_PHONE[finalbal: FINAL_BALANCE] = ( buySamsungPhone -> UPDATE_BALANCE[finalbal] ),
+UPDATE_BALANCE[finalbal: FINAL_BALANCE] = ( updateBalance[finalbal] -> STUDENT ) .
+
+/* GRAND MOTHER PROCESS */
+GRAND_MOTHER = INITIAL,
+INITIAL = ( readBalance[initBal: INITIAL_BALANCE] -> PERFORM_DEPOSIT[initBal] ),
+PERFORM_DEPOSIT[initBal: INITIAL_BALANCE] = ( depositBirthdayPresentMoney[amount: TRANSACTION_RANGE] -> CALCULATE_NEW_BALANCE[initBal][amount] ),
+CALCULATE_NEW_BALANCE[initBal: INITIAL_BALANCE][amount: TRANSACTION_RANGE] = ( calculateNewBalance[initBal+amount] -> UPDATE_BALANCE[initBal + amount] ),
+UPDATE_BALANCE[finalbal: FINAL_BALANCE] = ( updateBalance[finalbal] -> SEND_CARD ),
+SEND_CARD = ( sendEBirthdayCard -> GRAND_MOTHER ) .
+
+/* LOAN COMPANY PROCESS */
+LOAN_COMPANY = INITIAL, 
+INITIAL = ( readBalance[initBal: INITIAL_BALANCE] -> PERFORM_DEPOSIT[initBal] ),
+PERFORM_DEPOSIT[initBal: INITIAL_BALANCE] = ( depositLoan[amount: TRANSACTION_RANGE] -> CALCULATE_NEW_BALANCE[initBal][amount] ),
+CALCULATE_NEW_BALANCE[initBal: INITIAL_BALANCE][amount: TRANSACTION_RANGE] = ( calculateNewBalance[initBal + amount] -> UPDATE_BALANCE[initBal + amount] ),
+UPDATE_BALANCE[finalbal: FINAL_BALANCE] = ( updateBalance[finalbal] -> LOAN_COMPANY ) .
+
+/* UNIVERSITY PROCESS */
+UNIVERSITY = INITIAL,
+INITIAL = ( readBalance[initBal: INITIAL_BALANCE] -> PERFORM_WITHDRAWAL[initBal] ),
+PERFORM_WITHDRAWAL[initBal: INITIAL_BALANCE] = ( deductUniFees[amount: TRANSACTION_RANGE] -> CALCULATE_NEW_BALANCE[initBal][amount] ),
+CALCULATE_NEW_BALANCE[initBal: INITIAL_BALANCE][amount:TRANSACTION_RANGE] = (
+    when (amount > initBal) insufficientBalance -> UNIVERSITY |
+    when (amount <= initBal) calculateNewBalance[initBal - amount] -> UPDATE_BALANCE[initBal - amount]
+),
+UPDATE_BALANCE[finalbal: FINAL_BALANCE] = ( updateBalance[finalbal] -> UNIVERSITY) .

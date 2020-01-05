@@ -94,16 +94,13 @@ public class Student extends Thread {
 
     // Method which combines and return a list of all transactions
     private List <Transaction> getAllTransactions() {
-        List <Transaction> withdrawTransactions = this.getWithdrawTransactions();
         List <Transaction> depositTransactions = this.getDepositTransactions();
+        List <Transaction> withdrawTransactions = this.getWithdrawTransactions();
 
         // Combining withdraw and deposit transactions
         List<Transaction> allTransactions = new ArrayList<>();
-        allTransactions.addAll(withdrawTransactions);
         allTransactions.addAll(depositTransactions);
-
-        // Shuffling the transactions
-        Collections.shuffle(allTransactions);
+        allTransactions.addAll(withdrawTransactions);
 
         return allTransactions;
     }

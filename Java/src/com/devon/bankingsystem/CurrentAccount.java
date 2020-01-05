@@ -26,7 +26,7 @@ public class CurrentAccount implements BankAccount {
     public synchronized void deposit(Transaction transaction) {
         int amountToDeposit = transaction.getAmount();
         this.balance += amountToDeposit;
-        this.statement.addTransaction(transaction.getCID(), amountToDeposit, this.balance, TransactionType.DEPOSIT);
+        this.statement.addTransaction(transaction.getCID(), amountToDeposit, this.getBalance(), TransactionType.DEPOSIT);
 
         // Notifying all the other waiting threads that the deposit is complete
         notifyAll();
@@ -37,7 +37,7 @@ public class CurrentAccount implements BankAccount {
     public synchronized void withdrawal(Transaction transaction) {
         int amountToWithdraw = transaction.getAmount();
 
-        while (amountToWithdraw > this.balance) {
+        while (amountToWithdraw > this.getBalance()) {
             try {
                 System.out.println("CURRENT_ACCOUNT -> Failed to Withdraw " + amountToWithdraw + " by " + transaction.getCID() + ". Waiting for balance to be sufficient!");
 
@@ -49,7 +49,7 @@ public class CurrentAccount implements BankAccount {
         }
 
         this.balance -= amountToWithdraw;
-        this.statement.addTransaction(transaction.getCID(), amountToWithdraw, this.balance, TransactionType.WITHDRAW);
+        this.statement.addTransaction(transaction.getCID(), amountToWithdraw, this.getBalance(), TransactionType.WITHDRAW);
     }
 
     @Override
